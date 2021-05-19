@@ -113,3 +113,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return true; //Process all other keycodes normally
     }
 }
+
+enum combos {
+  CTRL_Q_ESC,
+};
+
+const uint16_t PROGMEM ctrl_q_combo[] = {KC_LCTL, KC_Q, COMBO_END};
+
+combo_t key_combos[COMBO_COUNT] = {
+  [CTRL_Q_ESC] = COMBO(ctrl_q_combo, KC_ESC),
+};
