@@ -14,7 +14,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT_65_ansi_blocker(
         KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, KC_DEL,  \
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_HOME, \
-        MT(MOD_LCTL, KC_ESC), KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_PGUP, \
+        KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_PGUP, \
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   KC_PGDN, \
         KC_LCTL, KC_LGUI, KC_LALT,                            KC_SPC,                             KC_RALT, MO(1),   KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
@@ -40,10 +40,36 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
 #define MODS_ALT  (get_mods() & MOD_BIT(KC_LALT) || get_mods() & MOD_BIT(KC_RALT))
 
+/*
+ * This is used to provide us a responsive way for handling modifiers + tap
+ * setup. The way it works is if we have a modifier pressed and then a
+ * non-modifier key pressed, then it will set this flag to true. When we release
+ * that modifier it will set the flag back to false. This becomes handy for when
+ * we want the modifier key to double as a tap key while still letting `modifier
+ * + key` to register the moment it is pressed instead of waiting for QMK's
+ * TAPPING_TERM.
+ *
+ * Contrast this with QMK's mod-tap functionality which waits until the TAPPING_TERM
+ * delay has passed to determine a tap vs a hold.
+ */
+static uint16_t mod_ctrl_state;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
+    const bool is_tap = !record->event.pressed && !mod_ctrl_state;
 
     switch (keycode) {
+        case KC_LCTL:
+            // register as an escape key instead
+            if (is_tap) {
+                // IMPORTANT: don't trigger ctrl to prevent `ctrl + esc` combo
+                // from opening the start menu in windows.
+                unregister_code(KC_LCTL);
+                register_code(KC_ESC);
+                return false;
+            }
+
+            return true;
         case U_T_AUTO:
             if (record->event.pressed && MODS_SHIFT && MODS_CTRL) {
                 TOGGLE_FLAG_AND_PRINT(usb_extra_manual, "USB extra port manual mode");
@@ -112,4 +138,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         default:
             return true; //Process all other keycodes normally
     }
+}
+
+uint16_t handle_mod_ctrl_state(uint16_t state, uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case KC_LCTL:
+            if (record->event.pressed) {
+                return 0;
+            }
+    }
+
+    if (MODS_CTRL && record->event.pressed) {
+        return state + 1;
+    }
+
+    return state;
+}
+
+void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    mod_ctrl_state = handle_mod_ctrl_state(mod_ctrl_state, keycode, record);
 }
