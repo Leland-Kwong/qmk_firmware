@@ -52,11 +52,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * Contrast this with QMK's mod-tap functionality which waits until the TAPPING_TERM
  * delay has passed to determine a tap vs a hold.
  */
-static bool mod_ctrl_state;
+static bool mod_ctrl_active;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
-    const bool is_tap = !record->event.pressed && !mod_ctrl_state;
+    const bool is_tap = !record->event.pressed && !mod_ctrl_active;
 
     switch (keycode) {
         case KC_LCTL:
@@ -140,10 +140,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 }
 
-bool handle_mod_ctrl_state(bool state, uint16_t keycode, keyrecord_t *record) {
+bool handle_mod_ctrl_active(bool active, uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_LCTL:
-            // reset the state
+            // reset state
             if (record->event.pressed) {
                 return false;
             }
@@ -153,9 +153,9 @@ bool handle_mod_ctrl_state(bool state, uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    return state;
+    return active;
 }
 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
-    mod_ctrl_state = handle_mod_ctrl_state(mod_ctrl_state, keycode, record);
+    mod_ctrl_active = handle_mod_ctrl_active(mod_ctrl_active, keycode, record);
 }
