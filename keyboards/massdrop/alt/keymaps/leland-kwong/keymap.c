@@ -56,16 +56,23 @@ static bool mod_ctrl_active;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
+    static uint32_t mod_ctrl_timer;
     const bool is_tap = !record->event.pressed && !mod_ctrl_active;
 
     switch (keycode) {
         case KC_LCTL:
+            if (record->event.pressed) {
+                mod_ctrl_timer = timer_read32();
+            }
             // register as an escape key instead
-            if (is_tap) {
-                // IMPORTANT: don't trigger ctrl to prevent `ctrl + esc` combo
+            if (is_tap && timer_elapsed32(mod_ctrl_timer) <= 200) {
+                // IMPORTANT: release ctrl first to prevent `ctrl + esc` combo
                 // from opening the start menu in windows.
                 unregister_code(KC_LCTL);
                 register_code(KC_ESC);
+                // IMPORTANT: if we don't do this, then the key will be considered held down.
+                // https://docs.qmk.fm/#/feature_macros?id=unregister_codeltkcgt
+                unregister_code(KC_ESC);
                 return false;
             }
 
