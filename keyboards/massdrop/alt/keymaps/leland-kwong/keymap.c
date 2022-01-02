@@ -166,3 +166,8 @@ bool handle_mod_ctrl_active(bool active, uint16_t keycode, keyrecord_t *record) 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
     mod_ctrl_active = handle_mod_ctrl_active(mod_ctrl_active, keycode, record);
 }
+
+void keyboard_pre_init_user(void) {
+    rgb_matrix_set_flags(LED_FLAG_KEYLIGHT | LED_FLAG_MODIFIER | LED_FLAG_INDICATOR);
+    rgb_matrix_set_color_all(0, 0, 0);
+}
