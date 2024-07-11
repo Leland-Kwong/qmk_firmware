@@ -18,5 +18,6 @@
 #include QMK_KEYBOARD_H
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT( KC_BTN4, KC_BTN5, DRAG_SCROLL, KC_BTN2, KC_BTN1, KC_BTN3 )
+    [0] = LAYOUT( KC_BTN4, KC_BTN5, MO(1),   KC_BTN2, KC_BTN1, KC_BTN3 ),
+    [1] = LAYOUT( KC_NO,   KC_NO,   KC_NO,   KC_BTN6, KC_NO,   KC_NO   )
 };
